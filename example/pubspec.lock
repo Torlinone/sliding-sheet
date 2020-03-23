@@ -115,7 +115,7 @@ packages:
       name: material_design_icons_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.3.4595"
+    version: "4.0.5045"
   meta:
     dependency: transitive
     description:
@@ -130,13 +130,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.6.4"
-  pedantic:
-    dependency: transitive
-    description:
-      name: pedantic
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.8.0+1"
   petitparser:
     dependency: transitive
     description:
@@ -162,7 +155,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.2.8"
+    version: "0.2.10"
   source_span:
     dependency: transitive
     description:
@@ -204,7 +197,7 @@ packages:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.11"
+    version: "0.2.15"
   typed_data:
     dependency: transitive
     description:

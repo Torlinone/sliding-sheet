@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:example/util/util.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import 'package:sliding_sheet/sliding_sheet.dart';
@@ -23,7 +22,10 @@ class _MyAppState extends State<MyApp> {
     fontSize: 15,
   );
 
-  SheetState state;
+  ValueNotifier<SheetState> sheetState = ValueNotifier(SheetState.inital());
+  SheetState get state => sheetState.value;
+  set state(SheetState value) => sheetState.value = value;
+
   BuildContext context;
   SheetController controller;
 
@@ -46,37 +48,29 @@ class _MyAppState extends State<MyApp> {
         builder: (context) {
           this.context = context;
 
-          return WillPopScope(
-            onWillPop: () async {
-              if (state?.isCollapsed == false) {
-                controller?.collapse();
-                return false;
-              }
-              return true;
-            },
-            child: Scaffold(
-              body: Stack(
-                children: <Widget>[
-                  buildMap(),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top + 16, 16, 0),
-                      child: FloatingActionButton(
-                        child: Icon(
-                          Icons.layers,
-                          color: mapsBlue,
-                        ),
-                        backgroundColor: Colors.white,
-                        onPressed: () async {
-                          await showBottomSheet(context);
-                        },
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: Stack(
+              children: <Widget>[
+                buildMap(),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top + 16, 16, 0),
+                    child: FloatingActionButton(
+                      child: Icon(
+                        Icons.layers,
+                        color: mapsBlue,
                       ),
+                      backgroundColor: Colors.white,
+                      onPressed: () async {
+                        await showBottomSheet(context);
+                      },
                     ),
                   ),
-                  buildSheet(),
-                ],
-              ),
+                ),
+                buildSheet(),
+              ],
             ),
           );
         },
@@ -88,12 +82,13 @@ class _MyAppState extends State<MyApp> {
     return SlidingSheet(
       controller: controller,
       color: Colors.white,
-      elevation: 16,
+      shadowColor: Colors.black26,
+      elevation: 12,
       maxWidth: 500,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top * interval(.7, 1.0, progress),
-      ),
-      cornerRadius: 16 * (1 - interval(0.7, 1.0, progress)),
+      cornerRadius: 16,
+      cornerRadiusOnFullscreen: 0.0,
+      closeSheetOnBackButtonPressed: true,
+      addTopViewPaddingOnFullscreen: true,
       border: Border.all(
         color: Colors.grey.shade300,
         width: 3,
@@ -112,8 +107,15 @@ class _MyAppState extends State<MyApp> {
       ),
       scrollSpec: ScrollSpec.bouncingScroll(),
       listener: (state) {
+        final needsRebuild = (this.state?.isCollapsed != state.isCollapsed) ||
+            (this.state.isExpanded != state.isExpanded) ||
+            (this.state.isAtTop != state.isAtTop) ||
+            (this.state.isAtBottom != state.isAtBottom);
         this.state = state;
-        setState(() {});
+
+        if (needsRebuild) {
+          setState(() {});
+        }
       },
       headerBuilder: buildHeader,
       footerBuilder: buildFooter,
@@ -135,11 +137,16 @@ class _MyAppState extends State<MyApp> {
           SizedBox(height: 2),
           Align(
             alignment: Alignment.topCenter,
-            child: CustomContainer(
-              width: 16,
-              height: 4,
-              borderRadius: 2,
-              color: Colors.grey.withOpacity(.5 * (1 - interval(0.7, 1.0, progress))),
+            child: ValueListenableBuilder(
+              valueListenable: sheetState,
+              builder: (context, state, _) {
+                return CustomContainer(
+                  width: 16,
+                  height: 4,
+                  borderRadius: 2,
+                  color: Colors.grey.withOpacity(.5 * (1 - interval(0.7, 1.0, state.progress))),
+                );
+              },
             ),
           ),
           SizedBox(height: 8),
@@ -317,7 +324,7 @@ class _MyAppState extends State<MyApp> {
         divider,
         SizedBox(height: 32),
         Icon(
-          MdiIcons.githubCircle,
+          MdiIcons.github,
           color: Colors.grey.shade900,
           size: 48,
         ),
@@ -544,15 +551,20 @@ class _MyAppState extends State<MyApp> {
             return Container(
               color: Colors.white,
               child: Material(
-                child: ListView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: List.generate(10, (i) => i).map((i) {
-                    return Container(
-                      padding: const EdgeInsets.all(48),
-                      child: Text('Item $i'),
-                    );
-                  }).toList(),
+                child: Column(
+                  children: <Widget>[
+                    TextField(),
+                    ListView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: List.generate(10, (i) => i).map((i) {
+                        return Container(
+                          padding: const EdgeInsets.all(48),
+                          child: Text('Item $i'),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
             );
